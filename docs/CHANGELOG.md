@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Add opt-in `obeyRobotsMeta` mode to honor page-level indexing directives from the final response's `X-Robots-Tag` header and the main document's `<meta name="robots">` tags. It merges general rules with optional `robotsMetaUserAgents` bot rules (case-insensitive, comma lists, `none`/`all` supported, restrictions winning on conflict). On `noindex` the page is neither evaluated, screenshot nor exported while `onSuccess` still receives the response and policy; on `nofollow` the links it discovers are not scheduled. Disabled by default, so existing behavior and results stay unchanged.
+
 ### Changed
 
 - Update [jquery](https://github.com/jquery/jquery) version to 3.5.1.

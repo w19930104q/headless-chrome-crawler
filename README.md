@@ -23,6 +23,7 @@ Powered by Headless Chrome, the crawler provides [simple APIs](#api-reference) t
 * Emulate devices and user agents
 * Priority queue for crawling efficiency
 * Obey [robots.txt](https://developers.google.com/search/reference/robots_txt)
+* Obey page-level `noindex` / `nofollow` directives from `X-Robots-Tag` headers and `<meta name="robots">` tags (opt-in via `obeyRobotsMeta`)
 * Follow [sitemap.xml](https://www.sitemaps.org/)
 * [Promise] support
 

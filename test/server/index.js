@@ -24,6 +24,7 @@ class Server {
     this._delays = new Map();
     this._auths = new Map();
     this._csps = new Map();
+    this._headers = new Map();
     this._contents = new Map();
   }
 
@@ -33,6 +34,7 @@ class Server {
     this._auths.clear();
     this._contents.clear();
     this._csps.clear();
+    this._headers.clear();
   }
 
   /**
@@ -57,6 +59,14 @@ class Server {
    */
   setCSP(path, csp) {
     this._csps.set(path, csp);
+  }
+
+  /**
+   * @param {string} path
+   * @param {!Object} headers
+   */
+  setHeaders(path, headers) {
+    this._headers.set(path, headers);
   }
 
   /**
@@ -94,7 +104,7 @@ class Server {
   _onRequest(request, response) {
     this._handleError(request, response);
     const { path } = parse(request.url);
-    response.setHeader('Content-Type', mime.getType(path));
+    response.setHeader('Content-Type', mime.getType(path) || 'text/html');
     const auth = this._auths.get(path);
     if (!this._authenticate(auth, request)) {
       response.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Secure Area"' });
@@ -102,6 +112,10 @@ class Server {
       return;
     }
     const delay = this._delays.get(path) || 0;
+    const extraHeaders = this._headers.get(path);
+    if (extraHeaders) {
+      Object.keys(extraHeaders).forEach(name => response.setHeader(name, extraHeaders[name]));
+    }
     setTimeout(() => {
       const route = this._routes.get(path);
       if (route) {

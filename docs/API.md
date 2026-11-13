@@ -76,10 +76,15 @@ const HCCrawler = require('headless-chrome-crawler');
     * `page` <[Page]> [Puppeteer](https://github.com/GoogleChrome/puppeteer)'s raw API.
     * `crawl` <[Function]> Function to run crawling, which resolves to the result passed to `onSuccess` function.
   * `onSuccess(result)` <[Function]> Function to be called when `evaluatePage()` successes.
-    * `result` <[Object]>
       * `redirectChain` <[Array]<[Object]>> Redirect chain of requests.
         * `url` <[string]> Requested url.
         * `headers` <[Object]> Request headers.
+      * `robotsMeta` <[Object]> Page-level indexing policy decision, which is `null` when `obeyRobotsMeta` is disabled.
+        * `obeyed` <[boolean]> Whether the page-level policy was evaluated, always `true` when present.
+        * `noindex` <[boolean]> Whether indexing is forbidden, in which case `result` and `screenshot` are `null` and no exporter line is written.
+        * `nofollow` <[boolean]> Whether following links is forbidden, in which case the links discovered on this page are never scheduled.
+        * `bots` <[Array]<[string]>> Lower-cased bot names merged with the general rules.
+        * `policies` <[Object]> Per-bot policy keyed by `*` and each bot name, each exposing `noindex` and `nofollow`. Restrictive directives win on conflict.
       * `cookies` <[Array]<[Object]>> List of cookies.
         * `name` <[string]>
         * `value` <[string]>
@@ -136,10 +141,15 @@ url, allowedDomains, deniedDomains, timeout, priority, depthPriority, delay, ret
     * `page` <[Page]> [Puppeteer](https://github.com/GoogleChrome/puppeteer)'s raw API.
     * `crawl` <[Function]> Function to run crawling, which resolves to the result passed to `onSuccess` function.
   * `onSuccess(result)` <[Function]> Function to be called when `evaluatePage()` successes.
-    * `result` <[Object]>
       * `redirectChain` <[Array]<[Object]>> Redirect chain of requests.
         * `url` <[string]> Requested url.
         * `headers` <[Object]> Request headers.
+      * `robotsMeta` <[Object]> Page-level indexing policy decision, which is `null` when `obeyRobotsMeta` is disabled.
+        * `obeyed` <[boolean]> Whether the page-level policy was evaluated, always `true` when present.
+        * `noindex` <[boolean]> Whether indexing is forbidden, in which case `result` and `screenshot` are `null` and no exporter line is written.
+        * `nofollow` <[boolean]> Whether following links is forbidden, in which case the links discovered on this page are never scheduled.
+        * `bots` <[Array]<[string]>> Lower-cased bot names merged with the general rules.
+        * `policies` <[Object]> Per-bot policy keyed by `*` and each bot name, each exposing `noindex` and `nofollow`. Restrictive directives win on conflict.
       * `cookies` <[Array]<[Object]>> List of cookies.
         * `name` <[string]>
         * `value` <[string]>
@@ -200,6 +210,8 @@ url, allowedDomains, deniedDomains, timeout, priority, depthPriority, delay, ret
   * `skipDuplicates` <[boolean]> Whether to skip duplicate requests, default to `true`. The request is considered to be the same if `url`, `userAgent`, `device` and `extraHeaders` are strictly the same.
   * `skipRequestedRedirect` <[boolean]> Whether to skip requests already appeared in redirect chains of requests, default to `false`. This option is ignored when `skipDuplicates` is set `false`.
   * `obeyRobotsTxt` <[boolean]> Whether to obey [robots.txt](https://developers.google.com/search/reference/robots_txt), default to `true`.
+  * `obeyRobotsMeta` <[boolean]> Whether to obey page-level indexing directives delivered through the final response's `X-Robots-Tag` header and the main document's `<meta name="robots">` tags, default to `false`. When enabled, a `noindex` page is neither evaluated, screenshot nor exported while `onSuccess` still receives its response and policy decision, and a `nofollow` page never schedules the links it discovers. Only the built-in crawling pipeline is affected.
+  * `robotsMetaUserAgents` <[string]|[Array]<[string]>> Bot names whose `X-Robots-Tag` / `<meta>` rules are merged with the general `*` / `robots` rules, default to `null`. Matching is case-insensitive. Leave `null` to apply only the general rules.
   * `followSitemapXml` <[boolean]> Whether to use [sitemap.xml](https://www.sitemaps.org/) to find locations, default to `false`.
   * `allowedDomains` <[Array]<[string]|[RegExp]>> List of domains allowed to request. Pass `null` or leave default to skip checking allowed domain
   * `deniedDomains` <[Array]<[string]|[RegExp]>> List of domains not allowed to request. Pass `null` or leave default to skip checking denied domain.
