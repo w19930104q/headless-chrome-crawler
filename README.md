@@ -24,6 +24,7 @@ Powered by Headless Chrome, the crawler provides [simple APIs](#api-reference) t
 * Priority queue for crawling efficiency
 * Obey [robots.txt](https://developers.google.com/search/reference/robots_txt)
 * Follow [sitemap.xml](https://www.sitemaps.org/)
+* Build a link graph that keeps every link's source page, frame, text and rel
 * [Promise] support
 
 ## Getting Started
@@ -79,6 +80,7 @@ const HCCrawler = require('headless-chrome-crawler');
 * [Redis cache to skip duplicate requests](https://github.com/yujiosaka/headless-chrome-crawler/blob/master/examples/redis-cache.js)
 * [Export a CSV file for crawled results](https://github.com/yujiosaka/headless-chrome-crawler/blob/master/examples/csv-exporter.js)
 * [Conditionally saving screenshots](https://github.com/yujiosaka/headless-chrome-crawler/blob/master/examples/conditional-screenshot.js)
+* [Building a link graph across frames](https://github.com/yujiosaka/headless-chrome-crawler/blob/master/examples/link-graph.js)
 
 See [here](https://github.com/yujiosaka/headless-chrome-crawler/tree/master/examples) for the full examples list. The examples can be run from the root folder as follows:
 

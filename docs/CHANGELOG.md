@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Add optional `linkGraph` mode that records every `a[href]` edge across same- and cross-origin frames with its raw href, resolved url, text, rel, source frame path and document url, keeping duplicate edges in frame tree/DOM order. `rel="nofollow"` edges are recorded but not auto-followed, while other followable edges to the same url are still enqueued. Detached or navigating frames are reported in `frameFailures` without delivering mixed-document edges. The legacy `links` string array and default behavior are unchanged.
+
 ### Changed
 
 - Update [jquery](https://github.com/jquery/jquery) version to 3.5.1.

@@ -99,6 +99,19 @@ const HCCrawler = require('headless-chrome-crawler');
       * `result` <[Serializable]> The result resolved from `evaluatePage()` option.
       * `screenshot` <[Buffer]> Buffer with the screenshot image, which is `null` when `screenshot` option not passed.
       * `links` <[Array]<[string]>> List of links found in the requested page.
+      * `linkGraph` <[Array]<[Object]>> Link graph of every `a[href]` element across the page and all of its frames. Only present when the `linkGraph` option is enabled. Duplicate edges are kept, ordered by the frame tree and each document's DOM order. Each edge contains:
+        * `rawHref` <[string]> The `href` attribute exactly as written in the document.
+        * `url` <[string]> The href resolved against the owning document's base and final url.
+        * `text` <[string]> The link's text content.
+        * `rel` <[?string]> The raw `rel` attribute, or `null` when absent.
+        * `nofollow` <[boolean]> `true` when the `rel` attribute contains the `nofollow` token.
+        * `framePath` <[Array]<[number]>> Path of the owning frame from the main frame. `[]` is the main frame, `[0]` its first child frame, `[0, 1]` the second child of that frame, and so on.
+        * `documentUrl` <[string]> The final url of the frame document that contains the link.
+      * `frameFailures` <[Array]<[Object]>> Frames that could not be collected because they were detached or navigating while the graph was collected. Only present when the `linkGraph` option is enabled. Other frames are unaffected and no edges from mixed documents are delivered. Each failure contains:
+        * `framePath` <[Array]<[number]>> Path of the failed frame from the main frame.
+        * `documentUrl` <[string]> The frame document's url at the time of the failure.
+        * `name` <[string]> The frame name.
+        * `reason` <[string]> Either `"detached"` or `"navigating"`.
       * `depth` <[number]> Depth of the followed links.
       * `previousUrl` <[string]> The previous request's url. The value is `null` for the initial request.
   * `onError(error)` <[Function]> Function to be called when request fails.
@@ -159,6 +172,19 @@ url, allowedDomains, deniedDomains, timeout, priority, depthPriority, delay, ret
       * `result` <[Serializable]> The result resolved from `evaluatePage()` option.
       * `screenshot` <[Buffer]> Buffer with the screenshot image, which is `null` when `screenshot` option not passed.
       * `links` <[Array]<[string]>> List of links found in the requested page.
+      * `linkGraph` <[Array]<[Object]>> Link graph of every `a[href]` element across the page and all of its frames. Only present when the `linkGraph` option is enabled. Duplicate edges are kept, ordered by the frame tree and each document's DOM order. Each edge contains:
+        * `rawHref` <[string]> The `href` attribute exactly as written in the document.
+        * `url` <[string]> The href resolved against the owning document's base and final url.
+        * `text` <[string]> The link's text content.
+        * `rel` <[?string]> The raw `rel` attribute, or `null` when absent.
+        * `nofollow` <[boolean]> `true` when the `rel` attribute contains the `nofollow` token.
+        * `framePath` <[Array]<[number]>> Path of the owning frame from the main frame. `[]` is the main frame, `[0]` its first child frame, `[0, 1]` the second child of that frame, and so on.
+        * `documentUrl` <[string]> The final url of the frame document that contains the link.
+      * `frameFailures` <[Array]<[Object]>> Frames that could not be collected because they were detached or navigating while the graph was collected. Only present when the `linkGraph` option is enabled. Other frames are unaffected and no edges from mixed documents are delivered. Each failure contains:
+        * `framePath` <[Array]<[number]>> Path of the failed frame from the main frame.
+        * `documentUrl` <[string]> The frame document's url at the time of the failure.
+        * `name` <[string]> The frame name.
+        * `reason` <[string]> Either `"detached"` or `"navigating"`.
       * `depth` <[number]> Depth of the followed links.
       * `previousUrl` <[string]> The previous request's url. The value is `null` for the initial request.
   * `onError(error)` <[Function]> Function to be called when request fails.
@@ -234,11 +260,20 @@ url, allowedDomains, deniedDomains, timeout, priority, depthPriority, delay, ret
     * `secure` <[boolean]>
     * `sameSite` <[string]> `"Strict"` or `"Lax"`.
   * `evaluatePage()` <[Function]> Function to be evaluated in browsers. Return serializable object. If it's not serializable, the result will be `undefined`.
+  * `linkGraph` <[boolean]> Whether to collect a link graph of every `a[href]` element across the page and all of its frames, defaults to `false`. When enabled, each result additionally contains a `linkGraph` array of edges and a `frameFailures` array, while the `links` string array keeps working unchanged (see below).
 * returns: <[Promise]> Promise resolved when queue is pushed.
 
 > **Note**: `response.url` may be different from `options.url` especially when the requested url is redirected.
 
 The options can be either an object, an array, or a string. When it's an array, each item in the array will be executed. When it's a string, the options are transformed to an object with only url defined.
+
+#### Link graph mode
+
+Set `linkGraph: true` to record *which link on which page points where*, instead of only getting a deduplicated list of urls. Every `a[href]` element in the main document and in every reachable same-origin or cross-origin frame becomes one edge in `result.linkGraph`. Repeated links are kept as separate edges, ordered by a depth-first walk of the frame tree and, within each document, by DOM order. Urls are resolved in the browser against each document's final address and its `<base>` tag.
+
+The frame set is fixed when collection starts. A frame that is detached or in the middle of a navigation at that moment is reported in `result.frameFailures` rather than producing edges from mixed documents, and it never affects the other frames.
+
+An edge whose `rel` contains the `nofollow` token (`nofollow: true`) is still recorded in the graph but is not followed automatically. If the same url is reachable through another, followable edge, that url is still enqueued. Scheduling otherwise keeps the original deduplication, depth and domain/scope rules. The `result.links` string array continues to be returned and behaves exactly as it does with `linkGraph` disabled; with the option off, neither `linkGraph` nor `frameFailures` is present.
 
 ### crawler.setMaxRequest(maxRequest)
 
